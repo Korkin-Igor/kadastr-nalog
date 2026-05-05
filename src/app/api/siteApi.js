@@ -93,4 +93,14 @@ export async function logoutAdmin() {
   });
 }
 
+export async function changeAdminPassword(passwords) {
+  return requestJson('auth.php', {
+    method: 'POST',
+    body: JSON.stringify({
+      action: 'change_password',
+      ...passwords
+    })
+  });
+}
+
 export { ApiError };

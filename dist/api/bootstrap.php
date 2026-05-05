@@ -312,6 +312,40 @@ function requireAuthenticatedAdmin(): array
     return $admin;
 }
 
+function clearAuthenticatedSession(): void
+{
+    $_SESSION = [];
+
+    if (ini_get('session.use_cookies')) {
+        $params = session_get_cookie_params();
+        setcookie(
+            session_name(),
+            '',
+            time() - 42000,
+            $params['path'],
+            $params['domain'],
+            (bool) $params['secure'],
+            (bool) $params['httponly']
+        );
+    }
+
+    session_destroy();
+}
+
+function findAdminById(int $adminId): ?array
+{
+    $statement = getPdo()->prepare(
+        'SELECT id, username, password_hash, is_active FROM admin_users WHERE id = :id LIMIT 1'
+    );
+    $statement->execute([
+        ':id' => $adminId,
+    ]);
+
+    $admin = $statement->fetch();
+
+    return is_array($admin) ? $admin : null;
+}
+
 function findAdminByUsername(string $username): ?array
 {
     $statement = getPdo()->prepare(
@@ -324,6 +358,19 @@ function findAdminByUsername(string $username): ?array
     $admin = $statement->fetch();
 
     return is_array($admin) ? $admin : null;
+}
+
+function updateAdminPasswordHash(int $adminId, string $passwordHash): void
+{
+    $statement = getPdo()->prepare(
+        'UPDATE admin_users
+         SET password_hash = :password_hash
+         WHERE id = :id'
+    );
+    $statement->execute([
+        ':password_hash' => $passwordHash,
+        ':id' => $adminId,
+    ]);
 }
 
 function loadStoredLandingContent(): ?array

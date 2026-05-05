@@ -1,6 +1,7 @@
 import { inject, reactive, readonly, watch } from 'vue';
 import {
   ApiError,
+  changeAdminPassword as changeAdminPasswordRequest,
   fetchAdminSession,
   fetchLandingContent,
   isApiUnavailableError,
@@ -141,6 +142,7 @@ const status = reactive({
   hasCheckedSession: false,
   isAuthenticating: false,
   isAuthenticated: false,
+  isChangingPassword: false,
   authUser: ''
 });
 
@@ -282,6 +284,24 @@ async function logoutAdmin() {
   }
 }
 
+async function changeAdminPassword(passwords) {
+  status.isChangingPassword = true;
+
+  try {
+    return await changeAdminPasswordRequest(passwords);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      status.isAuthenticated = false;
+      status.authUser = '';
+      status.authErrorMessage = 'Сессия администратора истекла. Войдите снова.';
+    }
+
+    throw error;
+  } finally {
+    status.isChangingPassword = false;
+  }
+}
+
 watch(
   landingData,
   () => {
@@ -300,6 +320,7 @@ export const landingContentStore = {
   ensureAdminSessionChecked,
   loginAdmin,
   logoutAdmin,
+  changeAdminPassword,
   status: readonly(status)
 };
 

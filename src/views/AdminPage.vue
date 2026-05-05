@@ -14,6 +14,7 @@ const {
   ensureAdminSessionChecked,
   loginAdmin,
   logoutAdmin,
+  changeAdminPassword,
   status
 } = useLandingContent();
 
@@ -22,6 +23,15 @@ const loginRecaptcha = useRecaptchaAction('admin_login');
 const credentials = reactive({
   username: '',
   password: ''
+});
+const passwordForm = reactive({
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+});
+const passwordFeedback = reactive({
+  message: '',
+  isError: false
 });
 
 const contentSections = [
@@ -139,7 +149,7 @@ const statusLabel = computed(() => {
   }
 
   if (status.authErrorMessage) {
-    return `Ошибка входа: ${status.authErrorMessage}`;
+    return `Ошибка авторизации: ${status.authErrorMessage}`;
   }
 
   if (!status.isAuthenticated) {
@@ -177,6 +187,17 @@ function handleReset() {
   resetLandingData();
 }
 
+function resetPasswordForm() {
+  passwordForm.currentPassword = '';
+  passwordForm.newPassword = '';
+  passwordForm.confirmPassword = '';
+}
+
+function setPasswordFeedback(message, isError) {
+  passwordFeedback.message = message;
+  passwordFeedback.isError = isError;
+}
+
 async function handleLogin() {
   try {
     const recaptchaToken = await loginRecaptcha.execute();
@@ -199,6 +220,7 @@ async function handleLogin() {
       ...payload
     });
     credentials.password = '';
+    setPasswordFeedback('', false);
   } catch {
     if (!status.authErrorMessage) {
       status.authErrorMessage = 'Не удалось выполнить проверку reCAPTCHA. Попробуйте ещё раз.';
@@ -208,8 +230,46 @@ async function handleLogin() {
   }
 }
 
+async function handleChangePassword() {
+  setPasswordFeedback('', false);
+
+  if (
+    !passwordForm.currentPassword.trim()
+    || !passwordForm.newPassword.trim()
+    || !passwordForm.confirmPassword.trim()
+  ) {
+    setPasswordFeedback('Заполните текущий пароль, новый пароль и подтверждение.', true);
+    return;
+  }
+
+  if (passwordForm.newPassword.length < 8) {
+    setPasswordFeedback('Новый пароль должен содержать минимум 8 символов.', true);
+    return;
+  }
+
+  if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+    setPasswordFeedback('Подтверждение не совпадает с новым паролем.', true);
+    return;
+  }
+
+  try {
+    await changeAdminPassword({
+      currentPassword: passwordForm.currentPassword,
+      newPassword: passwordForm.newPassword
+    });
+
+    resetPasswordForm();
+    setPasswordFeedback('Пароль успешно обновлён.', false);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Не удалось сменить пароль.';
+    setPasswordFeedback(message, true);
+  }
+}
+
 async function handleLogout() {
   await logoutAdmin();
+  resetPasswordForm();
+  setPasswordFeedback('', false);
 }
 
 onMounted(() => {
@@ -318,6 +378,72 @@ onMounted(() => {
         </section>
 
         <section v-else class="admin-page__sections">
+          <article class="admin-card admin-security">
+            <div class="admin-card__header">
+              <h2>Смена пароля</h2>
+              <p>
+                Вы вошли как <code>{{ status.authUser }}</code>. Для смены пароля укажите текущий
+                пароль и задайте новый.
+              </p>
+            </div>
+
+            <div class="admin-card__body">
+              <form class="admin-password__form" @submit.prevent="handleChangePassword">
+                <label class="admin-login__field">
+                  <span>Текущий пароль</span>
+                  <input
+                    v-model="passwordForm.currentPassword"
+                    type="password"
+                    autocomplete="current-password"
+                    placeholder="Введите текущий пароль"
+                  />
+                </label>
+
+                <label class="admin-login__field">
+                  <span>Новый пароль</span>
+                  <input
+                    v-model="passwordForm.newPassword"
+                    type="password"
+                    autocomplete="new-password"
+                    minlength="8"
+                    placeholder="Минимум 8 символов"
+                  />
+                </label>
+
+                <label class="admin-login__field">
+                  <span>Подтверждение нового пароля</span>
+                  <input
+                    v-model="passwordForm.confirmPassword"
+                    type="password"
+                    autocomplete="new-password"
+                    minlength="8"
+                    placeholder="Повторите новый пароль"
+                  />
+                </label>
+
+                <button
+                  class="button button--primary admin-password__submit"
+                  type="submit"
+                  :disabled="status.isChangingPassword"
+                >
+                  {{ status.isChangingPassword ? 'Сохраняем пароль…' : 'Сменить пароль' }}
+                </button>
+              </form>
+
+              <p
+                v-if="passwordFeedback.message"
+                :class="[
+                  'admin-password__message',
+                  passwordFeedback.isError
+                    ? 'admin-password__message--error'
+                    : 'admin-password__message--success'
+                ]"
+              >
+                {{ passwordFeedback.message }}
+              </p>
+            </div>
+          </article>
+
           <details
             v-for="section in contentSections"
             :key="section.key"
@@ -499,6 +625,29 @@ onMounted(() => {
 
 .admin-login__submit {
   justify-content: center;
+}
+
+.admin-password__form {
+  display: grid;
+  gap: 14px;
+  max-width: 520px;
+}
+
+.admin-password__submit {
+  justify-content: center;
+}
+
+.admin-password__message {
+  margin: 0;
+  font-weight: 700;
+}
+
+.admin-password__message--error {
+  color: #8d2635;
+}
+
+.admin-password__message--success {
+  color: #1f6b45;
 }
 
 .admin-login__recaptcha {
