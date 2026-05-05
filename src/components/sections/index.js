@@ -1,0 +1,10 @@
+export { default as AuditSection } from './AuditSection.vue';
+export { default as ChecklistSection } from './ChecklistSection.vue';
+export { default as FreeServicesSection } from './FreeServicesSection.vue';
+export { default as HeroSection } from './HeroSection.vue';
+export { default as IdeaSection } from './IdeaSection.vue';
+export { default as ImportantSection } from './ImportantSection.vue';
+export { default as OfferSection } from './OfferSection.vue';
+export { default as ReviewsSection } from './ReviewsSection.vue';
+export { default as StatusSection } from './StatusSection.vue';
+export { default as UsefulSection } from './UsefulSection.vue';
