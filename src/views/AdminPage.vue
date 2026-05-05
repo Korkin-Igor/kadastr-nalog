@@ -283,12 +283,7 @@ onMounted(() => {
       <div class="container admin-page__stack">
         <header class="admin-page__hero">
           <div class="admin-page__hero-copy">
-            <p class="eyebrow">Простая админка</p>
-            <h1>Меняйте тексты, отзывы, логотип и файлы через вход в админку</h1>
-            <p>
-              Контент сайта загружается с сервера, а после входа изменения автоматически
-              сохраняются в базу данных.
-            </p>
+            <h1>Админ-панель</h1>
           </div>
 
           <div class="admin-page__hero-actions">
@@ -323,15 +318,7 @@ onMounted(() => {
 
         <section v-if="!status.isAuthenticated" class="admin-login">
           <div class="admin-login__card">
-            <h2>Вход в админку</h2>
-            <p>
-              Используйте логин и пароль из таблицы <code>admin_users</code>. Без входа редактирование
-              и сохранение отключены.
-            </p>
-            <p>
-              Проверка выполняется через невидимую <code>reCAPTCHA v3</code>, поэтому отдельного
-              чекбокса на странице нет.
-            </p>
+            <h2>Вход</h2>
 
             <form class="admin-login__form" @submit.prevent="handleLogin">
               <label class="admin-login__field">

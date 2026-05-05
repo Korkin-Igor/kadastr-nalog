@@ -35,7 +35,7 @@ const routes = [
     name: 'admin',
     component: AdminPage,
     meta: {
-      title: 'Админка контента',
+      title: 'Админ-панель контента',
       description: 'Серверное редактирование контента landing-страницы'
     }
   },
