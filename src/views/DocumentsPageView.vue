@@ -209,7 +209,22 @@ function getDocumentIndustryLabel(documentItem) {
     return 'Подходит для всех отраслей';
   }
 
-  return `Только для: ${documentItem.industryIds
+  const industryIdsWithoutFallback = documentIndustries
+    .map((industry) => industry.id)
+    .filter((industryId) => industryId !== 30);
+  const matchesAllRealIndustries =
+    documentItem.industryIds.length === industryIdsWithoutFallback.length &&
+    industryIdsWithoutFallback.every((industryId) => documentItem.industryIds.includes(industryId));
+
+  if (matchesAllRealIndustries) {
+    return 'Подходит для всех отраслей, кроме «Нет отрасли»';
+  }
+
+  if (documentItem.industryIds.length >= 7) {
+    return `Подходит для ${documentItem.industryIds.length} отраслей`;
+  }
+
+  return `Для: ${documentItem.industryIds
     .map((industryId) => documentIndustryMap[industryId]?.label)
     .filter(Boolean)
     .join(', ')}`;
@@ -1366,7 +1381,7 @@ async function handleSubmit() {
   position: relative;
   z-index: 1;
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
 .documents-result-card__summary {
@@ -1394,7 +1409,7 @@ async function handleSubmit() {
 
 .documents-result-card__details {
   display: grid;
-  gap: 8px;
+  gap: 10px;
   max-height: 0;
   overflow: hidden;
   opacity: 0;
@@ -1407,13 +1422,17 @@ async function handleSubmit() {
 
 .documents-result-card:hover .documents-result-card__details,
 .documents-result-card--selected .documents-result-card__details {
-  max-height: 180px;
+  max-height: 260px;
   opacity: 1;
   transform: translateY(0);
 }
 
 .documents-result-card__price {
+  justify-self: start;
   margin: 0;
+  padding: 6px 10px;
+  border: 1px solid rgba(201, 183, 242, 0.92);
+  background: linear-gradient(180deg, rgba(249, 243, 255, 0.98) 0%, rgba(240, 231, 255, 0.94) 100%);
   color: #6c37be;
   font-size: 12px;
   font-weight: 800;
@@ -1441,6 +1460,7 @@ async function handleSubmit() {
   color: #5b7094;
   font-size: 12px;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .documents-order {
