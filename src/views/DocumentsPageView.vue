@@ -1079,6 +1079,7 @@ async function handleSubmit() {
   z-index: 1;
   display: grid;
   gap: 10px;
+  margin-bottom: 10px;
 }
 
 .documents-card__eyebrow {
