@@ -1,6 +1,7 @@
 <script setup>
 import { reactive, ref } from 'vue';
 import { useRecaptchaAction } from '@/app/security/recaptcha';
+import { buildPublicUrl } from '@/app/utils/publicUrl';
 
 const props = defineProps({
   title: { type: String, required: true },
@@ -162,7 +163,7 @@ async function handleSubmit() {
   }
 
   try {
-    const response = await fetch(props.actionUrl, {
+    const response = await fetch(buildPublicUrl(props.actionUrl), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json;charset=utf-8' },
       body: JSON.stringify(payload)

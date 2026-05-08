@@ -1,24 +1,27 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { servicePages } from '@/data/servicePages';
 import AdminPage from '@/views/AdminPage.vue';
+import DocumentsPageView from '@/views/DocumentsPageView.vue';
 import HomePage from '@/views/HomePage.vue';
 import NotFoundPage from '@/views/NotFoundPage.vue';
 import ServicePageView from '@/views/ServicePageView.vue';
 
 const APP_TITLE = 'Центр налоговой аналитики недвижимости';
 
-const serviceRoutes = servicePages.map((page) => ({
-  path: page.path,
-  name: page.slug,
-  component: ServicePageView,
-  props: {
-    slug: page.slug
-  },
-  meta: {
-    title: page.cardTitle,
-    description: page.hero.description
-  }
-}));
+const serviceRoutes = servicePages
+  .filter((page) => page.slug !== 'document-templates')
+  .map((page) => ({
+    path: page.path,
+    name: page.slug,
+    component: ServicePageView,
+    props: {
+      slug: page.slug
+    },
+    meta: {
+      title: page.cardTitle,
+      description: page.hero.description
+    }
+  }));
 
 const routes = [
   {
@@ -37,6 +40,16 @@ const routes = [
     meta: {
       title: 'Админ-панель контента',
       description: 'Серверное редактирование контента landing-страницы'
+    }
+  },
+  {
+    path: '/services/document-templates',
+    name: 'document-templates-catalog',
+    component: DocumentsPageView,
+    meta: {
+      title: 'Шаблоны документов для самостоятельного снижения налогов',
+      description:
+        'Подбор платных шаблонов документов, инструкций и рекомендаций по отрасли и разделам для собственников недвижимости.'
     }
   },
   ...serviceRoutes,
