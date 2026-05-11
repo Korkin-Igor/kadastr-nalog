@@ -1,13 +1,17 @@
 <script setup>
+import { computed } from 'vue';
 import { RouterLink } from 'vue-router';
 import SectionTitle from '@/components/ui/SectionTitle.vue';
 
-defineProps({
+const props = defineProps({
   usefulSection: {
     type: Object,
     required: true
   }
 });
+
+const featuredCards = computed(() => props.usefulSection.cards.filter((card) => card.featured));
+const regularCards = computed(() => props.usefulSection.cards.filter((card) => !card.featured));
 </script>
 
 <template>
@@ -21,19 +25,58 @@ defineProps({
         inverted
       />
 
-      <TransitionGroup name="stack" tag="div" class="useful-grid" appear>
+      <TransitionGroup
+        v-if="featuredCards.length"
+        name="stack"
+        tag="div"
+        class="useful-grid useful-grid--featured"
+        appear
+      >
         <RouterLink
-          v-for="(card, index) in usefulSection.cards"
-          :key="`${index}-${card.title}`"
+          v-for="(card, index) in featuredCards"
+          :key="`featured-${index}-${card.title}`"
           :to="card.to"
-          class="useful-card"
+          class="useful-card useful-card--featured"
           :style="{ '--stack-delay': `${80 + index * 70}ms` }"
           v-reveal="{ delay: 80 + index * 70 }"
         >
           <span class="useful-card__icon">
             <img :src="card.icon" alt="" aria-hidden="true" />
           </span>
-          <h3>{{ card.title }}</h3>
+          <div class="useful-card__body">
+            <span v-if="card.badge" class="useful-card__badge">{{ card.badge }}</span>
+            <h3>{{ card.title }}</h3>
+            <p class="useful-card__description">
+              {{ card.description }}
+            </p>
+            <span class="useful-card__cta">
+              {{ card.ctaLabel || 'Открыть страницу' }}
+            </span>
+          </div>
+        </RouterLink>
+      </TransitionGroup>
+
+      <TransitionGroup
+        v-if="regularCards.length"
+        name="stack"
+        tag="div"
+        class="useful-grid useful-grid--default"
+        appear
+      >
+        <RouterLink
+          v-for="(card, index) in regularCards"
+          :key="`regular-${index}-${card.title}`"
+          :to="card.to"
+          class="useful-card"
+          :style="{ '--stack-delay': `${220 + index * 55}ms` }"
+          v-reveal="{ delay: 220 + index * 55 }"
+        >
+          <span class="useful-card__icon">
+            <img :src="card.icon" alt="" aria-hidden="true" />
+          </span>
+          <div class="useful-card__body">
+            <h3>{{ card.title }}</h3>
+          </div>
         </RouterLink>
       </TransitionGroup>
     </div>
@@ -67,6 +110,11 @@ defineProps({
   gap: 18px;
 }
 
+.useful-grid--featured,
+.useful-grid--default {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .useful-section .section-title__heading {
   font-size: clamp(38px, 4vw, 54px);
 }
@@ -80,7 +128,7 @@ defineProps({
   gap: 0 18px;
   align-items: start;
   padding: 24px;
-  min-height: 88px;
+  min-height: 112px;
   border: 1px solid var(--border-soft);
   border-radius: 20px;
   background: rgba(12, 33, 73, 0.48);
@@ -91,6 +139,20 @@ defineProps({
     border-color 420ms cubic-bezier(0.22, 0.74, 0.2, 1),
     background 420ms cubic-bezier(0.22, 0.74, 0.2, 1),
     box-shadow 420ms cubic-bezier(0.22, 0.74, 0.2, 1);
+}
+
+.useful-card--featured {
+  grid-template-columns: 60px minmax(0, 1fr);
+  gap: 0 18px;
+  padding: 26px;
+  min-height: 236px;
+  border-color: rgba(160, 195, 255, 0.3);
+  background:
+    radial-gradient(circle at 100% 100%, rgba(112, 72, 255, 0.22) 0%, rgba(112, 72, 255, 0) 58%),
+    linear-gradient(160deg, rgba(20, 41, 88, 0.9) 0%, rgba(18, 55, 92, 0.9) 48%, rgba(43, 33, 100, 0.88) 100%);
+  box-shadow:
+    0 26px 56px rgba(6, 18, 45, 0.24),
+    0 0 0 1px rgba(165, 225, 255, 0.08) inset;
 }
 
 .useful-card::before,
@@ -161,6 +223,17 @@ defineProps({
   z-index: 1;
 }
 
+.useful-card__body {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.useful-card--featured .useful-card__body {
+  align-content: start;
+  gap: 10px;
+}
+
 .useful-card__icon {
   display: inline-flex;
   align-items: center;
@@ -177,10 +250,39 @@ defineProps({
     box-shadow 360ms cubic-bezier(0.22, 0.74, 0.2, 1);
 }
 
+.useful-card--featured .useful-card__icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(27, 151, 234, 0.94) 0%, rgba(105, 57, 184, 0.92) 100%);
+  box-shadow:
+    0 14px 28px rgba(28, 125, 226, 0.34),
+    0 0 22px rgba(123, 112, 255, 0.28);
+}
+
 .useful-card__icon img {
   width: 24px;
   height: 24px;
   transition: transform 360ms cubic-bezier(0.22, 0.74, 0.2, 1);
+}
+
+.useful-card--featured .useful-card__icon img {
+  transform: scale(1.08);
+}
+
+.useful-card__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(223, 246, 255, 0.12);
+  border: 1px solid rgba(179, 226, 255, 0.22);
+  color: #dff6ff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .useful-card h3 {
@@ -192,6 +294,42 @@ defineProps({
   transition:
     color 320ms cubic-bezier(0.2, 0.9, 0.25, 1),
     text-shadow 320ms cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+
+.useful-card--featured h3 {
+  font-size: 21px;
+  line-height: 1.34;
+  color: #f6fbff;
+  text-shadow: none;
+}
+
+.useful-card__description {
+  margin: 0;
+  max-width: 44ch;
+  color: rgba(227, 240, 255, 0.78);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.useful-card__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  justify-self: start;
+  margin-top: 4px;
+  color: #eff9ff;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition:
+    transform 320ms cubic-bezier(0.2, 0.9, 0.25, 1),
+    color 320ms cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+
+.useful-card__cta::after {
+  content: '↗';
+  font-size: 15px;
 }
 
 .useful-card:hover .useful-card__icon {
@@ -209,6 +347,37 @@ defineProps({
 .useful-card:hover h3 {
   color: #dff6ff;
   text-shadow: 0 0 22px rgba(108, 199, 255, 0.34);
+}
+
+.useful-card:hover .useful-card__cta,
+.useful-card--featured:hover .useful-card__cta {
+  transform: translateX(4px);
+  color: #dff6ff;
+}
+
+@media (max-width: 920px) {
+  .useful-grid--featured,
+  .useful-grid--default {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .useful-card--featured {
+    grid-template-columns: 52px minmax(0, 1fr);
+    padding: 24px;
+    min-height: auto;
+  }
+
+  .useful-card--featured .useful-card__icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+  }
+
+  .useful-card--featured h3 {
+    font-size: 19px;
+  }
 }
 
 </style>

@@ -342,7 +342,10 @@ export const defaultLandingPageData = {
         title: 'Шаблоны документов для самостоятельного снижения налогов',
         description:
           'Готовые шаблоны заявлений, запросов и уведомлений, которые помогают законно оптимизировать налоговую нагрузку по недвижимости.',
-        to: '/services/document-templates'
+        to: '/services/document-templates',
+        featured: true,
+        badge: 'Документы',
+        ctaLabel: 'Открыть каталог'
       },
       {
         icon: articleIcon,
@@ -363,7 +366,10 @@ export const defaultLandingPageData = {
         title: 'Обучение по налогу на имущество как система знаний',
         description:
           'Практическое обучение по налогу на имущество с повторяемой системой знаний, к которой можно возвращаться в ежедневной работе.',
-        to: '/services/property-tax-training'
+        to: '/services/property-tax-training',
+        featured: true,
+        badge: 'Видео и аудио',
+        ctaLabel: 'Выбрать формат'
       },
       {
         icon: gavelIcon,

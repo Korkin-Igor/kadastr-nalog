@@ -5,11 +5,12 @@ import DocumentsPageView from '@/views/DocumentsPageView.vue';
 import HomePage from '@/views/HomePage.vue';
 import NotFoundPage from '@/views/NotFoundPage.vue';
 import ServicePageView from '@/views/ServicePageView.vue';
+import TrainingMediaPageView from '@/views/TrainingMediaPageView.vue';
 
 const APP_TITLE = 'Центр налоговой аналитики недвижимости';
 
 const serviceRoutes = servicePages
-  .filter((page) => page.slug !== 'document-templates')
+  .filter((page) => !['document-templates', 'property-tax-training'].includes(page.slug))
   .map((page) => ({
     path: page.path,
     name: page.slug,
@@ -50,6 +51,16 @@ const routes = [
       title: 'Шаблоны документов для самостоятельного снижения налогов',
       description:
         'Подбор платных шаблонов документов, инструкций и рекомендаций по отрасли и разделам для собственников недвижимости.'
+    }
+  },
+  {
+    path: '/services/property-tax-training',
+    name: 'property-tax-training-catalog',
+    component: TrainingMediaPageView,
+    meta: {
+      title: 'Видео и аудио по налогу на имущество',
+      description:
+        'Подбор обучающих материалов в формате видео и аудио по налогу на имущество с ручной заявкой на покупку.'
     }
   },
   ...serviceRoutes,
