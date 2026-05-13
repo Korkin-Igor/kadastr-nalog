@@ -1,9 +1,9 @@
 <script setup>
 import { useRecaptchaProvider } from 'vue-recaptcha/head';
 import DiscountPopup from '@/components/ui/DiscountPopup.vue';
-import { RECAPTCHA_ENABLED } from '@/app/security/recaptcha';
+import { isRecaptchaEnabled } from '@/app/security/recaptcha';
 
-if (RECAPTCHA_ENABLED) {
+if (isRecaptchaEnabled()) {
   useRecaptchaProvider();
 }
 </script>

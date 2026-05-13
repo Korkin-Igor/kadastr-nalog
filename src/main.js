@@ -6,20 +6,26 @@ import { VueRecaptchaPlugin } from 'vue-recaptcha/head';
 import App from './App.vue';
 import { LANDING_CONTENT_STORE_KEY, landingContentStore } from './app/content/landingContent';
 import { registerAppDirectives } from './app/registerDirectives';
-import { RECAPTCHA_ENABLED, RECAPTCHA_SITE_KEY } from './app/security/recaptcha';
+import { getRecaptchaSiteKey, isRecaptchaEnabled, loadRecaptchaConfig } from './app/security/recaptcha';
 import router from './router';
 
-const app = createApp(App);
+async function bootstrap() {
+  await loadRecaptchaConfig();
 
-registerAppDirectives(app);
+  const app = createApp(App);
 
-if (RECAPTCHA_ENABLED) {
-  app.use(VueRecaptchaPlugin, {
-    v3SiteKey: RECAPTCHA_SITE_KEY
-  });
+  registerAppDirectives(app);
+
+  if (isRecaptchaEnabled()) {
+    app.use(VueRecaptchaPlugin, {
+      v3SiteKey: getRecaptchaSiteKey()
+    });
+  }
+
+  app.use(router);
+  app.provide(LANDING_CONTENT_STORE_KEY, landingContentStore);
+
+  app.mount('#app');
 }
 
-app.use(router);
-app.provide(LANDING_CONTENT_STORE_KEY, landingContentStore);
-
-app.mount('#app');
+void bootstrap();

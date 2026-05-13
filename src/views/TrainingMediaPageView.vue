@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 import { useLandingContent } from '@/app/content/landingContent';
 import { useRecaptchaAction } from '@/app/security/recaptcha';
@@ -18,6 +18,8 @@ import {
 
 const { landingData } = useLandingContent();
 const recaptcha = useRecaptchaAction('lead_form_submit');
+const MOBILE_RESULTS_BREAKPOINT = 767;
+const MOBILE_MATERIALS_LIMIT = 6;
 
 const form = reactive({
   industryId: '',
@@ -38,6 +40,8 @@ const selectedFormatIds = ref([]);
 const selectedMaterialIds = ref([]);
 const successMessage = ref('');
 const isSubmitting = ref(false);
+const isMobileViewport = ref(false);
+const showAllMaterials = ref(false);
 
 const selectedIndustry = computed(() => trainingMediaIndustryMap[Number(form.industryId)] ?? null);
 const selectedSections = computed(() =>
@@ -64,6 +68,14 @@ const filteredMaterials = computed(() => {
   );
 });
 const filteredMaterialIdSet = computed(() => new Set(filteredMaterials.value.map((material) => material.id)));
+const visibleMaterials = computed(() =>
+  isMobileViewport.value && !showAllMaterials.value
+    ? filteredMaterials.value.slice(0, MOBILE_MATERIALS_LIMIT)
+    : filteredMaterials.value
+);
+const hasCollapsedMaterials = computed(
+  () => isMobileViewport.value && filteredMaterials.value.length > MOBILE_MATERIALS_LIMIT
+);
 const selectedMaterials = computed(() =>
   trainingMediaCatalog.filter((material) => selectedMaterialIds.value.includes(material.id))
 );
@@ -110,6 +122,28 @@ watch(
   },
   { immediate: true }
 );
+
+watch(
+  filteredMaterials,
+  () => {
+    showAllMaterials.value = false;
+  },
+  { deep: false }
+);
+
+watch(isMobileViewport, (isMobile) => {
+  if (!isMobile) {
+    showAllMaterials.value = false;
+  }
+});
+
+function updateViewportState() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  isMobileViewport.value = window.innerWidth <= MOBILE_RESULTS_BREAKPOINT;
+}
 
 function getCountLabel(count, emptyLabel, singularLabel, fewLabel, manyLabel) {
   if (count === 0) {
@@ -192,6 +226,10 @@ function clearSelectedMaterials() {
   clearFeedback();
   clearError('materials');
   selectedMaterialIds.value = [];
+}
+
+function toggleMaterialVisibility() {
+  showAllMaterials.value = !showAllMaterials.value;
 }
 
 function isEmailValid(value) {
@@ -348,6 +386,15 @@ async function handleSubmit() {
     isSubmitting.value = false;
   }
 }
+
+onMounted(() => {
+  updateViewportState();
+  window.addEventListener('resize', updateViewportState);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateViewportState);
+});
 </script>
 
 <template>
@@ -590,7 +637,7 @@ async function handleSubmit() {
                 appear
               >
                 <label
-                  v-for="(material, index) in filteredMaterials"
+                  v-for="(material, index) in visibleMaterials"
                   :key="material.id"
                   class="training-result-card"
                   :class="{ 'training-result-card--selected': selectedMaterialIds.includes(material.id) }"
@@ -628,6 +675,19 @@ async function handleSubmit() {
                   </div>
                 </label>
               </TransitionGroup>
+
+              <div v-if="hasCollapsedMaterials" class="training-results__toggle">
+                <p class="training-results__toggle-note">
+                  Показано {{ visibleMaterials.length }} из {{ filteredMaterials.length }}
+                </p>
+                <button
+                  type="button"
+                  class="training-inline-button training-inline-button--toggle"
+                  @click="toggleMaterialVisibility"
+                >
+                  {{ showAllMaterials ? 'Свернуть список' : 'Показать все материалы' }}
+                </button>
+              </div>
             </article>
           </div>
 
@@ -719,7 +779,7 @@ async function handleSubmit() {
                 {{ errors.submit }}
               </p>
 
-              <p v-if="recaptcha.enabled" class="training-order__recaptcha">
+              <p class="training-order__recaptcha">
                 Этот сайт защищен reCAPTCHA, применяются
                 <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">
                   Privacy Policy
@@ -1384,6 +1444,27 @@ async function handleSubmit() {
   margin-top: 18px;
 }
 
+.training-results__toggle {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.training-results__toggle-note {
+  margin: 0;
+  color: #4c6289;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.training-inline-button--toggle {
+  min-width: 228px;
+  justify-content: center;
+}
+
 .training-result-card {
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr);
@@ -1645,7 +1726,20 @@ async function handleSubmit() {
 }
 
 @media (max-width: 780px) {
+  .training-hero__stack {
+    padding-top: calc(126px + env(safe-area-inset-top, 0px));
+  }
+
   .training-topbar {
+    position: fixed;
+    top: 0;
+    left: 20px;
+    right: 20px;
+    z-index: 90;
+    padding: 14px 16px;
+    margin: 0;
+    border-top: 0;
+    border-radius: 0 0 18px 18px;
     align-items: start;
     flex-direction: column;
   }
@@ -1670,7 +1764,7 @@ async function handleSubmit() {
 
   .training-hero,
   .training-catalog {
-    padding-top: 8px;
+    padding-top: 0;
   }
 
   .training-card,

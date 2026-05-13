@@ -320,7 +320,7 @@ onBeforeUnmount(() => {
             {{ submitError }}
           </p>
 
-          <p v-if="recaptcha.enabled" class="discount-popup__recaptcha">
+          <p class="discount-popup__recaptcha">
             Этот сайт защищен reCAPTCHA, применяются
             <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
             и

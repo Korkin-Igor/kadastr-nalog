@@ -93,8 +93,6 @@ defineProps({
   box-shadow: none;
 }
 
-
-
 .audit-grid__item:hover {
   /* Легкое увеличение элемента */
   transform: translateY(-5px) scale(1.02);
@@ -107,6 +105,18 @@ defineProps({
   /* Делаем фон и рамку чуть более заметными */
   background-color: rgba(255, 255, 255, 0.07);
   border-color: rgba(0, 233, 255, 0.3);
+}
+
+@media (max-width: 899px) {
+  .audit-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .audit-grid__item {
+    width: 90vw;
+  }
 }
 
 </style>

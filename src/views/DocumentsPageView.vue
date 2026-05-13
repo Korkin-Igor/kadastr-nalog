@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 import { useRecaptchaAction } from '@/app/security/recaptcha';
 import { useLandingContent } from '@/app/content/landingContent';
@@ -16,6 +16,8 @@ import {
 
 const { landingData } = useLandingContent();
 const recaptcha = useRecaptchaAction('lead_form_submit');
+const MOBILE_RESULTS_BREAKPOINT = 767;
+const MOBILE_DOCUMENTS_LIMIT = 6;
 
 const form = reactive({
   industryId: '',
@@ -34,6 +36,8 @@ const selectedSectionIds = ref([]);
 const selectedDocumentIds = ref([]);
 const successMessage = ref('');
 const isSubmitting = ref(false);
+const isMobileViewport = ref(false);
+const showAllDocuments = ref(false);
 
 const selectedIndustry = computed(() => documentIndustryMap[Number(form.industryId)] ?? null);
 const selectedSections = computed(() =>
@@ -55,6 +59,14 @@ const filteredDocuments = computed(() => {
   );
 });
 const filteredDocumentIdSet = computed(() => new Set(filteredDocuments.value.map((item) => item.id)));
+const visibleDocuments = computed(() =>
+  isMobileViewport.value && !showAllDocuments.value
+    ? filteredDocuments.value.slice(0, MOBILE_DOCUMENTS_LIMIT)
+    : filteredDocuments.value
+);
+const hasCollapsedDocuments = computed(
+  () => isMobileViewport.value && filteredDocuments.value.length > MOBILE_DOCUMENTS_LIMIT
+);
 const selectedDocuments = computed(() =>
   documentCatalog.filter((documentItem) => selectedDocumentIds.value.includes(documentItem.id))
 );
@@ -104,6 +116,28 @@ watch(
   },
   { immediate: true }
 );
+
+watch(
+  filteredDocuments,
+  () => {
+    showAllDocuments.value = false;
+  },
+  { deep: false }
+);
+
+watch(isMobileViewport, (isMobile) => {
+  if (!isMobile) {
+    showAllDocuments.value = false;
+  }
+});
+
+function updateViewportState() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  isMobileViewport.value = window.innerWidth <= MOBILE_RESULTS_BREAKPOINT;
+}
 
 function clearError(field) {
   errors[field] = '';
@@ -158,6 +192,10 @@ function clearSelectedDocuments() {
   clearFeedback();
   clearError('documents');
   selectedDocumentIds.value = [];
+}
+
+function toggleDocumentVisibility() {
+  showAllDocuments.value = !showAllDocuments.value;
 }
 
 function isEmailValid(value) {
@@ -301,6 +339,15 @@ async function handleSubmit() {
     isSubmitting.value = false;
   }
 }
+
+onMounted(() => {
+  updateViewportState();
+  window.addEventListener('resize', updateViewportState);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateViewportState);
+});
 </script>
 
 <template>
@@ -518,7 +565,7 @@ async function handleSubmit() {
                 appear
               >
                 <label
-                  v-for="(documentItem, index) in filteredDocuments"
+                  v-for="(documentItem, index) in visibleDocuments"
                   :key="documentItem.id"
                   class="documents-result-card"
                   :class="{ 'documents-result-card--selected': selectedDocumentIds.includes(documentItem.id) }"
@@ -559,6 +606,19 @@ async function handleSubmit() {
                   </div>
                 </label>
               </TransitionGroup>
+
+              <div v-if="hasCollapsedDocuments" class="documents-results__toggle">
+                <p class="documents-results__toggle-note">
+                  Показано {{ visibleDocuments.length }} из {{ filteredDocuments.length }}
+                </p>
+                <button
+                  type="button"
+                  class="documents-inline-button documents-inline-button--toggle"
+                  @click="toggleDocumentVisibility"
+                >
+                  {{ showAllDocuments ? 'Свернуть список' : 'Показать все документы' }}
+                </button>
+              </div>
             </article>
           </div>
 
@@ -640,7 +700,7 @@ async function handleSubmit() {
                 {{ errors.submit }}
               </p>
 
-              <p v-if="recaptcha.enabled" class="documents-order__recaptcha">
+              <p class="documents-order__recaptcha">
                 Этот сайт защищён reCAPTCHA, применяются
                 <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">
                   Privacy Policy
@@ -1303,6 +1363,27 @@ async function handleSubmit() {
   gap: 10px;
 }
 
+.documents-results__toggle {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.documents-results__toggle-note {
+  margin: 0;
+  color: #5b6785;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.documents-inline-button--toggle {
+  min-width: 228px;
+  justify-content: center;
+}
+
 .documents-result-card {
   position: relative;
   isolation: isolate;
@@ -1654,8 +1735,25 @@ async function handleSubmit() {
 }
 
 @media (max-width: 720px) {
+  .documents-hero,
+  .documents-catalog {
+    padding-top: 0;
+  }
+
+  .documents-hero__stack {
+    padding-top: calc(126px + env(safe-area-inset-top, 0px));
+  }
+
   .documents-topbar {
+    position: fixed;
+    top: 0;
+    left: 20px;
+    right: 20px;
+    z-index: 90;
     padding: 14px 16px;
+    margin: 0;
+    border-top: 0;
+    border-radius: 0 0 18px 18px;
   }
 
   .documents-topbar,

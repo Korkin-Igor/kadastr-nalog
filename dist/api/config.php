@@ -57,8 +57,9 @@ declare(strict_types=1);
 |   При необходимости увеличьте max_allowed_packet на сервере.
 |
 | reCAPTCHA v3:
-| - На фронте задайте VITE_RECAPTCHA_SITE_KEY в .env для Vite.
-| - На сервере задайте переменную окружения RECAPTCHA_SECRET_KEY.
+| - На сервере задайте RECAPTCHA_SITE_KEY и RECAPTCHA_SECRET_KEY.
+| - Фронт получает публичный ключ через /api/runtime-config.php перед инициализацией Vue.
+| - Для локальной сборки Vite можно дополнительно задать VITE_RECAPTCHA_SITE_KEY как fallback.
 | - При необходимости настройте RECAPTCHA_MIN_SCORE, по умолчанию используется 0.5.
 |
 */
@@ -81,7 +82,8 @@ return [
         'same_site' => 'Lax',
     ],
     'recaptcha' => [
-        'secret_key' => getenv('RECAPTCHA_SECRET_KEY') ?: '6LcOwbosAAAAADDBPeATlLMybI_ax9npGo4gxsW1',
+        'site_key' => getenv('RECAPTCHA_SITE_KEY') ?: getenv('VITE_RECAPTCHA_SITE_KEY') ?: '6LcTIeUsAAAAADMqNFgH55kafn9XcxW9Y94RpWdz',
+        'secret_key' => getenv('RECAPTCHA_SECRET_KEY') ?: '6LcTIeUsAAAAAK8qzO0oso34UGgr5IZkKyOqy03P',
         'min_score' => (float) (getenv('RECAPTCHA_MIN_SCORE') ?: 0.5),
     ],
 ];

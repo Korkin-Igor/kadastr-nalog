@@ -296,7 +296,7 @@ function autocompleteFor(field) {
       <p v-if="successMessage" class="form-card__success">{{ successMessage }}</p>
     </Transition>
 
-    <p v-if="recaptcha.enabled" class="form-card__recaptcha">
+    <p class="form-card__recaptcha">
       Этот сайт защищён reCAPTCHA, применяются
       <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">
         Privacy Policy
